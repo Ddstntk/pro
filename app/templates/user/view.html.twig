@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Bookmarks
+{% endblock %}
+{#{% block profilepic %}../../files/img/{{ user.idPicture }}.jpg{% endblock %}#}
+{% block body %}
+    {% block name %}<h4>Witaj, {{ user.name }}! </h4>{% endblock %}
+{% if user is defined and user|length %}
+    <div>
+        {{ user.name }} {{ user.surname }}, {{ user.email }}, {{ user.idPicture }}, {{ user.access }}, {{ user.birthDate }}
+    </div>
+{% else %}
+    <div>
+        No user found!
+    </div>
+{% endif %}
+{% endblock %}
