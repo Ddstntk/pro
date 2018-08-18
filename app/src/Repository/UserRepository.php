@@ -48,6 +48,103 @@ class UserRepository
 
         return !$result ? [] : $result;
     }
+    /**
+     * Loads user by login.
+     *
+     * @param string $login User login
+     * @throws UsernameNotFoundException
+     * @throws \Doctrine\DBAL\DBALException
+     *
+     * @return array Result
+     */
+    public function loadUserByLogin($email)
+    {
+        try {
+            $user = $this->getUserByLogin($email);
+
+            if (!$user || !count($user)) {
+                throw new UsernameNotFoundException(
+                    sprintf('Username "%s" does not exist.', $email)
+                );
+            }
+
+            $roles = $this->getUserRoles($user['PK_idUsers']);
+
+            if (!$roles || !count($roles)) {
+                throw new UsernameNotFoundException(
+                    sprintf('Username "%s" does not exist.', $email)
+                );
+            }
+
+            return [
+                'email' => $user['email'],
+                'password' => $user['password'],
+                'roles' => $roles,
+            ];
+        } catch (DBALException $exception) {
+            throw new UsernameNotFoundException(
+                sprintf('Username "%s" does not exist.', $email)
+            );
+        } catch (UsernameNotFoundException $exception) {
+            throw $exception;
+        }
+    }
+
+
+    /**
+     * Gets user data by login.
+     *
+     * @param string $login User login
+     * @throws \Doctrine\DBAL\DBALException
+     *
+     * @return array Result
+     */
+    public function getUserByLogin($email)
+    {
+        try {
+            $queryBuilder = $this->db->createQueryBuilder();
+            $queryBuilder->select('u.PK_idUsers', 'u.email', 'u.password')
+                ->from('users', 'u')
+                ->where('u.email = :email')
+                ->setParameter(':email', $email, \PDO::PARAM_STR);
+
+            return $queryBuilder->execute()->fetch();
+        } catch (DBALException $exception) {
+            return [];
+        }
+    }
+
+
+    /**
+     * Gets user roles by User ID.
+     *
+     * @param integer $userId User ID
+     * @throws \Doctrine\DBAL\DBALException
+     *
+     * @return array Result
+     */
+    public function getUserRoles($userId)
+    {
+        $roles = [];
+
+        try {
+            $queryBuilder = $this->db->createQueryBuilder();
+            $queryBuilder->select('r.name')
+                ->from('users', 'u')
+                ->innerJoin('u', 'roles', 'r', 'u.role_id = r.id')
+                ->where('u.PK_idUsers = :id')
+                ->setParameter(':id', $userId, \PDO::PARAM_INT);
+            $result = $queryBuilder->execute()->fetchAll();
+
+            if ($result) {
+                $roles = array_column($result, 'name');
+            }
+
+            return $roles;
+        } catch (DBALException $exception) {
+            return $roles;
+        }
+    }
 
 
     protected function queryAll()
@@ -64,4 +161,5 @@ class UserRepository
             'u.birthDate')
             ->from('users', 'u');
     }
+
 }
