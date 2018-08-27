@@ -1,6 +1,6 @@
 <?php
 /**
- * Posts repository.
+ * Chat repository.
  */
 namespace Repository;
 
@@ -9,7 +9,7 @@ use Doctrine\DBAL\DBALException;
 use Utils\Paginator;
 
 /**
- * Class PostsRepository.
+ * Class ChayRepository.
  */
 class PostsRepository
 {
@@ -82,20 +82,13 @@ class PostsRepository
 
         try {
             $currentDateTime = new \DateTime();
-            $post['modified_at'] = $currentDateTime->format('Y-m-d H:i:s');
             unset($post['posts']);
 
-            if (isset($post['id']) && ctype_digit((string) $post['id'])) {
-                // update record
-                $postId = $post['id'];
-                unset($post['id']);
-                $this->db->update('posts', $post, ['id' => $postId]);
-            } else {
                 // add new record
-                $post['created_at'] = $currentDateTime->format('Y-m-d H:i:s');
-                $post['FK_idUsers'] = 1;
+                $post['PK_time'] = $currentDateTime->format('Y-m-d H:i:s');
+                $post['FK_idUsers'] = ;
                 $this->db->insert('posts', $post);
-            }
+
             $this->db->commit();
         } catch (DBALException $e) {
             $this->db->rollBack();

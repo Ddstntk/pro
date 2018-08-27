@@ -39,12 +39,15 @@
     <img class="img-fluid " style="width: 100%"
          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxQhGXAcJBNKSrbAA3LowecuQDGJkxUHpOpu-t1dP0kctRBWYx">
     {% block name %}{% endblock %}
-    <a href="#">Twój profil</a>
+    <a href="/user/profile">Twój profil</a>
     <a href="#">Zdjęcia</a>
-    <a href="#">Ustawienia konta</a>
-    <a href="#">Wyloguj</a>
+    <a href="/user/edit">Ustawienia konta</a>
+    <a class="btn btn-default" href="{{ url('auth_logout') }}" title="{{ 'auth.logout.label'|trans }}">
+        {{ 'auth.logout.label'|trans }}
+    </a>
 </div>
-
+<div class="container-fluid">
+</div>
 {% include 'default/_flash_messages.html.twig' %}
 {% block body %}{% endblock %}
 

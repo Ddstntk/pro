@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+
 
 {% block title %}{{ 'title.auth_login'|trans }}{% endblock %}
 
@@ -14,11 +14,12 @@
             message: error,
         } %}
     {% endif %}
-
     <div>
         {{ form_start(form, { method: 'post', action: path('auth_login_check') }) }}
         {{ form_widget(form) }}
         <input type="submit" value="{{ 'action.login'|trans }}" class="btn btn-success" />
         {{ form_end(form) }}
     </div>
+    <a href="/user/signup">Nie masz konta? Zarejestruj się</a>
+
 {% endblock %}

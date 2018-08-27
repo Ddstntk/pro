@@ -1,6 +1,6 @@
 <?php
 /**
- * Posts controller.
+ * Chat controller.
  *
  * @copyright (c) 2018 Konrad Szewczuk
  */
@@ -17,7 +17,7 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 /**
  * Class PostsController.
  */
-class PostsController implements ControllerProviderInterface
+class ChatController implements ControllerProviderInterface
 {
     /**
      * Routing settings.
@@ -30,10 +30,10 @@ class PostsController implements ControllerProviderInterface
     public function connect(Application $app)
     {
         $controller = $app['controllers_factory'];
-        $controller->get('/', [$this, 'indexAction'])->bind('posts_index');
-        $controller->match('/add', [$this, 'addAction'])
+        $controller->get('/chat', [$this, 'indexAction'])->bind('posts_index');
+        $controller->match('/send', [$this, 'sendAction'])
             ->method('POST|GET')
-            ->bind('posts_add');
+            ->bind('messages_send');
         return $controller;
     }
 
@@ -47,10 +47,10 @@ class PostsController implements ControllerProviderInterface
      */
     public function indexAction(Application $app, $page = 1)
     {
-        $postsRepository = new PostsRepository($app['db']);
+        $postsRepository = new ChatRepository($app['db']);
 
         return $app['twig']->render(
-            'posts/index.html.twig',
+            'chat/index.html.twig',
             ['paginator' => $postsRepository->findAllPaginated($page)]
         );
     }
@@ -69,7 +69,7 @@ class PostsController implements ControllerProviderInterface
         $post = [];
 
         $form = $app['form.factory']->createBuilder(
-            PostType::class,
+            MessageType::class,
             $post
         )->getForm();
         $form->handleRequest($request);
@@ -91,7 +91,7 @@ class PostsController implements ControllerProviderInterface
 
 
         return $app['twig']->render(
-            'posts/add.html.twig',
+            'chat/send.html.twig',
             [
                 'post' => $post,
                 'form' => $form->createView(),

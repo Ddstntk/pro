@@ -8,7 +8,7 @@
     {% block name %}<h4>Witaj, {{ user.name }}! </h4>{% endblock %}
 {% if user is defined and user|length %}
     <div>
-        {{ user.name }} {{ user.surname }}, {{ user.email }}, {{ user.idPicture }}, {{ user.access }}, {{ user.birthDate }}
+        {{ user.name }} {{ user.surname }}, {{ user.email }}, {{ user.idPicture }}, {{ user.role_id }}, {{ user.birthDate }}
     </div>
 {% else %}
     <div>

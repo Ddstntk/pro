@@ -95,18 +95,18 @@ $app->register(
                 'security' => false,
             ],
             'main' => [
-                'pattern' => '^.*$',
+                'pattern' => '\b(?!.*signup)\b\S+',
                 'form' => [
                     'login_path' => 'auth_login',
                     'check_path' => 'auth_login_check',
-                    'default_target_path' => 'tag_index',
+                    'default_target_path' => 'posts_index',
                     'username_parameter' => 'login_type[email]',
                     'password_parameter' => 'login_type[password]',
                 ],
                 'anonymous' => true,
                 'logout' => [
                     'logout_path' => 'auth_logout',
-                    'target_url' => 'tag_index',
+                    'target_url' => 'posts_index',
                 ],
                 'users' => function () use ($app) {
                     return new Provider\UserProvider($app['db']);

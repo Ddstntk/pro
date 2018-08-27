@@ -8,6 +8,7 @@ namespace Repository;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
+use Utils\Paginator;
 
 /**
  * Class UserRepository.
@@ -34,7 +35,7 @@ class UserRepository
     /**
      * Gets user data by login.
      *
-     * @param string $id User id
+     * @param  string $id User id
      * @throws \Doctrine\DBAL\DBALException
      *
      * @return array Result
@@ -48,10 +49,20 @@ class UserRepository
 
         return !$result ? [] : $result;
     }
+
+//    public function getUserByEmail($email)
+//    {
+//        $queryBuilder = $this->queryAll();
+//        $queryBuilder->where('u.email = :email')
+//            ->setParameter(':email', $email, \PDO::PARAM_INT);
+//        $result = $queryBuilder->execute()->fetch();
+//
+//        return !$result ? [] : $result;
+//    }
     /**
      * Loads user by login.
      *
-     * @param string $login User login
+     * @param  string $login User login
      * @throws UsernameNotFoundException
      * @throws \Doctrine\DBAL\DBALException
      *
@@ -60,7 +71,7 @@ class UserRepository
     public function loadUserByLogin($email)
     {
         try {
-            $user = $this->getUserByLogin($email);
+            $user = $this->getUserByEmail($email);
 
             if (!$user || !count($user)) {
                 throw new UsernameNotFoundException(
@@ -77,6 +88,7 @@ class UserRepository
             }
 
             return [
+                'id' => $user['PK_idUsers'],
                 'email' => $user['email'],
                 'password' => $user['password'],
                 'roles' => $roles,
@@ -94,12 +106,12 @@ class UserRepository
     /**
      * Gets user data by login.
      *
-     * @param string $login User login
+     * @param  string $login User login
      * @throws \Doctrine\DBAL\DBALException
      *
      * @return array Result
      */
-    public function getUserByLogin($email)
+    public function getUserByEmail($email)
     {
         try {
             $queryBuilder = $this->db->createQueryBuilder();
@@ -118,12 +130,12 @@ class UserRepository
     /**
      * Gets user roles by User ID.
      *
-     * @param integer $userId User ID
+     * @param  integer $userId User ID
      * @throws \Doctrine\DBAL\DBALException
      *
      * @return array Result
      */
-    public function getUserRoles($userId)
+    public function getUserRoles($id)
     {
         $roles = [];
 
@@ -133,7 +145,7 @@ class UserRepository
                 ->from('users', 'u')
                 ->innerJoin('u', 'roles', 'r', 'u.role_id = r.id')
                 ->where('u.PK_idUsers = :id')
-                ->setParameter(':id', $userId, \PDO::PARAM_INT);
+                ->setParameter(':id', $id, \PDO::PARAM_INT);
             $result = $queryBuilder->execute()->fetchAll();
 
             if ($result) {
@@ -146,7 +158,79 @@ class UserRepository
         }
     }
 
+    /**
+     * Save record.
+     *
+     * @param array $post Post
+     *
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function save($user)
+    {
+        $this->db->beginTransaction();
 
+        try{
+            if (isset($user['PK_idUsers']) && ctype_digit((string) $user['PK_idUsers'])) {
+                // update record
+                $userId = $user['PK_idUsers'];
+                unset($user['PK_idUsers']);
+                $this->db->update('users', $user, ['PK_idUsers' => $userId]);
+            } else {
+                // add new user
+                $this->db->insert('users', $user);
+                $this->db->commit();
+            }
+        } catch (DBALException $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    public function findAllPaginated($page = 1)
+    {
+        $countQueryBuilder = $this->queryAll()
+            ->select('COUNT(DISTINCT u.PK_idUsers) AS total_results')
+            ->setMaxResults(1);
+
+        $paginator = new Paginator($this->queryAll(), $countQueryBuilder);
+        $paginator->setCurrentPage($page);
+        $paginator->setMaxPerPage(6);
+
+        return $paginator->getCurrentPageResults();
+    }
+
+    //
+    //    public function save($bookmark)
+    //    {
+    //        $this->db->beginTransaction();
+    //
+    //        try {
+    //            $currentDateTime = new \DateTime();
+    //            $bookmark['modified_at'] = $currentDateTime->format('Y-m-d H:i:s');
+    //            $tagsIds = isset($bookmark['tags']) ? array_column($bookmark['tags'], 'id') : [];
+    //            unset($bookmark['bookmarks']);
+    //
+    //            if (isset($bookmark['id']) && ctype_digit((string) $bookmark['id'])) {
+    //                // update record
+    //                $bookmarkId = $bookmark['id'];
+    //                unset($bookmark['id']);
+    //                $this->removeLinkedTags($bookmarkId);
+    //                $this->addLinkedTags($bookmarkId, $tagsIds);
+    //                $this->db->update('si_bookmarks', $bookmark, ['id' => $bookmarkId]);
+    //            } else {
+    //                // add new record
+    //                $bookmark['created_at'] = $currentDateTime->format('Y-m-d H:i:s');
+    //
+    //                $this->db->insert('si_bookmarks', $bookmark);
+    //                $bookmarkId = $this->db->lastInsertId();
+    //                $this->addLinkedTags($bookmarkId, $tagsIds);
+    //            }
+    //            $this->db->commit();
+    //        } catch (DBALException $e) {
+    //            $this->db->rollBack();
+    //            throw $e;
+    //        }
+    //    }
     protected function queryAll()
     {
         $queryBuilder = $this->db->createQueryBuilder();
@@ -157,8 +241,9 @@ class UserRepository
             'u.surname',
             'u.email',
             'u.idPicture',
-            'u.access',
-            'u.birthDate')
+            'u.role_id',
+            'u.birthDate'
+        )
             ->from('users', 'u');
     }
 

@@ -9,6 +9,7 @@
         paginator: paginator,
         route_name: 'posts_index_paginated',
     } %}
+
     {% if paginator.data is defined and paginator.data|length %}
             <div class="customMyApp offset-md-2">
             <div name="feed" class="col-7 offset-md-1">
@@ -21,7 +22,7 @@
                     <div class="card w-100" style="width: 18rem;">
                         <div class="card-body">
                             <h5 class="card-title">idusers {{ row.FK_idUsers }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">Time</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ row.created_at }}</h6>
                             <p class="card-text">{{ row.content }}</p>
                             <a href="#" class="card-link">idmedia {{ row.idMedia }}</a>
                         </div>

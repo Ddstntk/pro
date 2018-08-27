@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Bookmarks
+{% endblock %}
+
+{% block body %}
+    {% include 'default/_paginator.html.twig' with {
+        paginator: paginator,
+        route_name: 'bookmarks_index_paginated',
+    } %}
+    <h1>
+        Bookmarks
+    </h1>
+    {% if paginator.data is defined and paginator.data|length %}
+        <ul>
+            {% for row in paginator.data %}
+                <li>{{ row.name }}, {{ row.surname }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div>
+            List is empty!
+        </div>
+    {% endif %}
+{% endblock %}

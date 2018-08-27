@@ -4,6 +4,7 @@
  */
 namespace Provider;
 
+
 use Doctrine\DBAL\Connection;
 use Repository\UserRepository;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
@@ -44,12 +45,11 @@ class UserProvider implements UserProviderInterface
     {
         $userRepository = new UserRepository($this->db);
         $user = $userRepository->loadUserByLogin($email);
-
         return new User(
+            $user['id'],
             $user['email'],
             $user['password'],
             $user['roles'],
-            true,
             true,
             true,
             true
