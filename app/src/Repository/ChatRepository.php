@@ -11,14 +11,14 @@ use Utils\Paginator;
 /**
  * Class ChayRepository.
  */
-class PostsRepository
+class ChatRepository
 {
     /**
      * Number of items per page.
      *
      * const int NUM_ITEMS
      */
-    const NUM_ITEMS = 10;
+    const NUM_ITEMS = 3;
 
     /**
      * Doctrine DBAL connection.
@@ -55,15 +55,28 @@ class PostsRepository
      *
      * @return array Result
      */
-    public function findAllPaginated($page = 1)
+    public function findAllPaginated($page, $userId, $id)
     {
-        $countQueryBuilder = $this->queryAll($page = 1)
-            ->select('COUNT(DISTINCT p.PK_idPosts) AS total_results')
-            ->setMaxResults(4);
+        $countQueryBuilder = $this->queryAll($page)
+            ->select('COUNT(DISTINCT m.PK_time) AS total_results')
+            ->where('m.FK_idConversations = 1')
+            ->setMaxResults(3);
 
-        $paginator = new Paginator($this->queryAll(), $countQueryBuilder);
+        $queryBuilder = $this->db->createQueryBuilder();
+        $result =
+            $queryBuilder->select('m.PK_time', 'm.content', 'u.name', 'u.surname')
+            ->from('messages', 'm')
+            ->innerJoin('m', 'participants', 'p', 'p.FK_idConversations = m.FK_idConversations')
+            ->innerJoin('m', 'users', 'u', 'u.PK_idUsers = m.FK_idUsers')
+            ->where('p.FK_idUsers = :userId',
+                              'm.FK_idConversations = :id')
+            ->orderBy('m.PK_time', 'DESC')
+            ->setParameters(array(':userId'=> $userId, ':id' => $id));
+
+
+        $paginator = new Paginator($result, $countQueryBuilder);
         $paginator->setCurrentPage($page);
-        $paginator->setMaxPerPage(self::NUM_ITEMS);
+        $paginator->setMaxPerPage(static::NUM_ITEMS);
 
         return $paginator->getCurrentPageResults();
     }
@@ -76,18 +89,19 @@ class PostsRepository
      *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function save($post)
+    public function save($message, $userId)
     {
         $this->db->beginTransaction();
 
         try {
             $currentDateTime = new \DateTime();
-            unset($post['posts']);
+            unset($message['messages']);
 
                 // add new record
-                $post['PK_time'] = $currentDateTime->format('Y-m-d H:i:s');
-                $post['FK_idUsers'] = ;
-                $this->db->insert('posts', $post);
+                $message['PK_time'] = $currentDateTime->format('Y-m-d H:i:s');
+                $message['FK_idUsers'] = $userId ;
+                $message['FK_idConversations'] = 3 ;
+                $this->db->insert('messages', $message);
 
             $this->db->commit();
         } catch (DBALException $e) {
@@ -96,28 +110,28 @@ class PostsRepository
         }
     }
 
-    /**
-     * Remove record.
-     *
-     * @param array $post Post
-     *
-     * @throws \Doctrine\DBAL\DBALException
-     *
-     * @return boolean Result
-     */
-    public function delete($post)
-    {
-        $this->db->beginTransaction();
-
-        try {
-            $this->removeLinkedTags($post['id']);
-            $this->db->delete('posts', ['id' => $post['id']]);
-            $this->db->commit();
-        } catch (DBALException $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
-    }
+//    /**
+//     * Remove record.
+//     *
+//     * @param array $post Post
+//     *
+//     * @throws \Doctrine\DBAL\DBALException
+//     *
+//     * @return boolean Result
+//     */
+//    public function delete($post)
+//    {
+//        $this->db->beginTransaction();
+//
+//        try {
+//            $this->removeLinkedTags($post['id']);
+//            $this->db->delete('posts', ['id' => $post['id']]);
+//            $this->db->commit();
+//        } catch (DBALException $e) {
+//            $this->db->rollBack();
+//            throw $e;
+//        }
+//    }
 
     /**
      * Query all records.
@@ -129,12 +143,10 @@ class PostsRepository
         $queryBuilder = $this->db->createQueryBuilder();
 
         return $queryBuilder->select(
-            'p.PK_idPosts',
-            'p.FK_idUsers',
-            'p.content',
-            'p.idMedia',
-            'p.created_at',
-            'p.modified_at'
-        )->from('posts', 'p');
+            'm.PK_time',
+            'm.FK_idConversations',
+            'm.FK_idUsers',
+            'm.content'
+        )->from('messages', 'm');
     }
 }

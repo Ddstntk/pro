@@ -95,7 +95,7 @@ $app->register(
                 'security' => false,
             ],
             'main' => [
-                'pattern' => '\b(?!.*signup)\b\S+',
+                'pattern' => '^.*$',
                 'form' => [
                     'login_path' => 'auth_login',
                     'check_path' => 'auth_login_check',
@@ -115,11 +115,13 @@ $app->register(
         ],
         'security.access_rules' => [
             ['^/auth.+$', 'IS_AUTHENTICATED_ANONYMOUSLY'],
-            ['^/.+$', 'ROLE_ADMIN'],
+            ['^/admin', 'ROLE_ADMIN'],
+            ['^.*$', 'ROLE_USER'],
         ],
         'security.role_hierarchy' => [
             'ROLE_ADMIN' => ['ROLE_USER'],
         ],
     ]
 );
+//dump($app['security.encoder.bcrypt']->encodePassword('szewczuk', ''));
 return $app;

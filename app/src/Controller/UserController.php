@@ -37,9 +37,6 @@ class UserController implements ControllerProviderInterface
         $controller->get('/profile', [$this, 'profileAction'])->bind('user_profile');
         $controller->get('/view/{id}', [$this, 'viewAction'])->bind('user_view');
         $controller->get('/index', [$this, 'indexAction'])->bind('user_index');
-        $controller->get('/signup', [$this, 'addUser'])
-            ->method('POST|GET')
-            ->bind('user_add');
         $controller->match('/edit', [$this, 'editAction'])
             ->method('GET|POST')
             ->bind('user_edit');
@@ -98,51 +95,7 @@ class UserController implements ControllerProviderInterface
         );
     }
 
-    /**
-     * Add User
-     *
-     * @param  Application $app
-     * @param  Request     $request
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
-     */
-    public function addUser(Application $app, Request $request)
-    {
-        $user = [];
 
-        $form = $app['form.factory']->createBuilder(
-            SignupType::class,
-            $user
-        )->getForm();
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $userRepository = new UserRepository($app['db']);
-
-            $user = $form->getData();
-            $password = $user['password'];
-            $user['password'] = $app['security.encoder.bcrypt']->encodePassword(
-                $password,
-                ''
-            );
-            $userRepository->save($user);
-
-            $app['session']->getFlashBag()->add(
-                'messages',
-                [
-                    'type' => 'success',
-                    'message' => 'message.element_successfully_added',
-                ]
-            );
-
-            return $app->redirect($app['url_generator']->generate('posts_index'), 301);
-        }
-
-
-        return $app['twig']->render(
-            'user/add.html.twig',
-            array('form' => $form->createView())
-        );
-    }
 
     public function editAction(Application $app, Request $request)
     {

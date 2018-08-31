@@ -44,7 +44,7 @@ class UserProvider implements UserProviderInterface
     public function loadUserByUsername($email)
     {
         $userRepository = new UserRepository($this->db);
-        $user = $userRepository->loadUserByLogin($email);
+        $user = $userRepository->loadUserByEmail($email);
         return new User(
             $user['id'],
             $user['email'],

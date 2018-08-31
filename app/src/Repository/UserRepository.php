@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Utils\Paginator;
-
+use Symfony\Component\Validator\Constraints\DateTime;
 /**
  * Class UserRepository.
  */
@@ -68,7 +68,7 @@ class UserRepository
      *
      * @return array Result
      */
-    public function loadUserByLogin($email)
+    public function loadUserByEmail($email)
     {
         try {
             $user = $this->getUserByEmail($email);
@@ -177,6 +177,7 @@ class UserRepository
                 $this->db->update('users', $user, ['PK_idUsers' => $userId]);
             } else {
                 // add new user
+                $user['birthDate'] = $user['birthDate'] ->format('Y-m-d');
                 $this->db->insert('users', $user);
                 $this->db->commit();
             }
@@ -199,38 +200,7 @@ class UserRepository
         return $paginator->getCurrentPageResults();
     }
 
-    //
-    //    public function save($bookmark)
-    //    {
-    //        $this->db->beginTransaction();
-    //
-    //        try {
-    //            $currentDateTime = new \DateTime();
-    //            $bookmark['modified_at'] = $currentDateTime->format('Y-m-d H:i:s');
-    //            $tagsIds = isset($bookmark['tags']) ? array_column($bookmark['tags'], 'id') : [];
-    //            unset($bookmark['bookmarks']);
-    //
-    //            if (isset($bookmark['id']) && ctype_digit((string) $bookmark['id'])) {
-    //                // update record
-    //                $bookmarkId = $bookmark['id'];
-    //                unset($bookmark['id']);
-    //                $this->removeLinkedTags($bookmarkId);
-    //                $this->addLinkedTags($bookmarkId, $tagsIds);
-    //                $this->db->update('si_bookmarks', $bookmark, ['id' => $bookmarkId]);
-    //            } else {
-    //                // add new record
-    //                $bookmark['created_at'] = $currentDateTime->format('Y-m-d H:i:s');
-    //
-    //                $this->db->insert('si_bookmarks', $bookmark);
-    //                $bookmarkId = $this->db->lastInsertId();
-    //                $this->addLinkedTags($bookmarkId, $tagsIds);
-    //            }
-    //            $this->db->commit();
-    //        } catch (DBALException $e) {
-    //            $this->db->rollBack();
-    //            throw $e;
-    //        }
-    //    }
+
     protected function queryAll()
     {
         $queryBuilder = $this->db->createQueryBuilder();

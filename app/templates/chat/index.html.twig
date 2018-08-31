@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Bookmarks
+{% endblock %}
+
+{% block body %}
+    {% include 'default/_paginator.html.twig' with {
+        paginator: paginator,
+        route_name: 'chat_index_paginated',
+    } %}
+    <h1>
+        Wiadomości
+    </h1>
+
+    {% if paginator.data is defined and paginator.data|length %}
+        <ul>
+            {% for row in paginator.data %}
+                <li>{{ row.PK_time }}, {{ row.name }} {{ row.surname }}: {{ row.content }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div>
+            List is empty!
+        </div>
+    {% endif %}
+{% endblock %}

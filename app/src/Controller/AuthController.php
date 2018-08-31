@@ -4,11 +4,13 @@
  */
 namespace Controller;
 
+
 use Form\LoginType;
 use Silex\Application;
 use Silex\Api\ControllerProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
-
+use Repository\UserRepository;
+use Form\SignupType;
 /**
  * Class AuthController.
  */
@@ -25,6 +27,9 @@ class AuthController implements ControllerProviderInterface
             ->bind('auth_login');
         $controller->get('logout', [$this, 'logoutAction'])
             ->bind('auth_logout');
+        $controller->get('/signup', [$this, 'signupAction'])
+            ->method('POST|GET')
+            ->bind('user_add');
 
         return $controller;
     }
@@ -51,6 +56,50 @@ class AuthController implements ControllerProviderInterface
         );
     }
 
+
+    /**
+     * Signu Up
+     *
+     * @param  Application $app
+     * @param  Request     $request
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     */
+    public function signupAction(Application $app, Request $request)
+    {
+        $user = [];
+
+        $form = $app['form.factory']->createBuilder(
+            SignupType::class,
+            $user
+        )->getForm();
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $userRepository = new UserRepository($app['db']);
+
+            $user = $form->getData();
+            $password = $user['password'];
+            $user['password'] = $app['security.encoder.bcrypt']->encodePassword($password, '');
+            $user['role_id'] = 2;
+            $userRepository->save($user);
+
+            $app['session']->getFlashBag()->add(
+                'messages',
+                [
+                    'type' => 'success',
+                    'message' => 'message.element_successfully_added',
+                ]
+            );
+
+            return $app->redirect($app['url_generator']->generate('posts_index'), 301);
+        }
+
+
+        return $app['twig']->render(
+            'user/add.html.twig',
+            array('form' => $form->createView())
+        );
+    }
     /**
      * Logout action.
      *

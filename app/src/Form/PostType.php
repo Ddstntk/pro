@@ -55,7 +55,6 @@ class PostType extends AbstractType
         $resolver->setDefaults(
             [
                 'validation_groups' => 'post-default',
-                'tags_repository' => null,
             ]
         );
     }

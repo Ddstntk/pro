@@ -9,8 +9,8 @@ namespace Controller;
 use Silex\Application;
 use Silex\Api\ControllerProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Repository\PostsRepository;
-use Form\PostType;
+use Repository\ChatRepository;
+use Form\MessageType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
@@ -30,7 +30,7 @@ class ChatController implements ControllerProviderInterface
     public function connect(Application $app)
     {
         $controller = $app['controllers_factory'];
-        $controller->get('/chat', [$this, 'indexAction'])->bind('posts_index');
+        $controller->get('/view/{id}', [$this, 'indexAction'])->bind('chat_index_paginated');
         $controller->match('/send', [$this, 'sendAction'])
             ->method('POST|GET')
             ->bind('messages_send');
@@ -45,13 +45,13 @@ class ChatController implements ControllerProviderInterface
      *
      * @return string Response
      */
-    public function indexAction(Application $app, $page = 1)
+    public function indexAction(Application $app, $page = 1, $id)
     {
-        $postsRepository = new ChatRepository($app['db']);
-
+        $chatRepository = new ChatRepository($app['db']);
+        $userId = $app['security.token_storage']->getToken()->getUser()->getID();
         return $app['twig']->render(
             'chat/index.html.twig',
-            ['paginator' => $postsRepository->findAllPaginated($page)]
+            ['paginator' => $chatRepository->findAllPaginated($page, $userId, $id)]
         );
     }
 
@@ -64,7 +64,7 @@ class ChatController implements ControllerProviderInterface
      *
      * @return \Symfony\Component\HttpFoundation\Response HTTP Response
      */
-    public function addAction(Application $app, Request $request)
+    public function sendAction(Application $app, Request $request)
     {
         $post = [];
 
@@ -73,10 +73,10 @@ class ChatController implements ControllerProviderInterface
             $post
         )->getForm();
         $form->handleRequest($request);
-
+        $userId = $app['security.token_storage']->getToken()->getUser()->getID();
         if ($form->isSubmitted() && $form->isValid()) {
-            $postsRepository = new PostsRepository($app['db']);
-            $postsRepository->save($form->getData());
+            $postsRepository = new ChatRepository($app['db']);
+            $postsRepository->save($form->getData(), $userId);
 
             $app['session']->getFlashBag()->add(
                 'messages',
@@ -86,7 +86,7 @@ class ChatController implements ControllerProviderInterface
                 ]
             );
 
-            return $app->redirect($app['url_generator']->generate('posts_index'), 301);
+            return $app->redirect($app['url_generator']->generate('chat_index_paginated'), 301);
         }
 
 
@@ -98,5 +98,6 @@ class ChatController implements ControllerProviderInterface
             ]
         );
     }
+
 
 }
