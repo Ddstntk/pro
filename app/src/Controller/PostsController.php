@@ -1,8 +1,17 @@
 <?php
 /**
+ * PHP Version 5.6
  * Posts controller.
  *
- * @copyright (c) 2018 Konrad Szewczuk
+ * @category  Social_Network
+ *
+ * @author    Konrad Szewczuk <konrad3szewczuk@gmail.com>
+ *
+ * @copyright 2018 Konrad Szewczuk
+ *
+ * @license   https://opensource.org/licenses/MIT MIT license
+ *
+ * @link      cis.wzks.uj.edu.pl/~16_szewczuk
  */
 namespace Controller;
 
@@ -16,57 +25,86 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
 /**
  * Class PostsController.
+ *
+ * @category  Social_Network
+ *
+ * @author    Konrad Szewczuk <konrad3szewczuk@gmail.com>
+ *
+ * @copyright 2018 Konrad Szewczuk
+ *
+ * @license   https://opensource.org/licenses/MIT MIT license
+ *
+ * @link      cis.wzks.uj.edu.pl/~16_szewczuk
  */
 class PostsController implements ControllerProviderInterface
 {
-    /**
-     * Routing settings.
-     *
-     * @param \Silex\Application $app Silex application
-     *
-     * @return \Silex\ControllerCollection Result
-     */
 
+    /**
+     * Routing settings
+     *
+     * @param Application $app Application
+     *
+     * @return mixed|\Silex\ControllerCollection
+     */
     public function connect(Application $app)
     {
         $controller = $app['controllers_factory'];
-        $controller->get('/', [$this, 'indexAction'])->bind('posts_index');
+        $controller->get('/page/{page}', [$this, 'indexAction'])
+            ->assert('page', '[1-9]\d*')
+            ->value('page', 1)
+            ->bind('posts_index_paginated');
         $controller->match('/add', [$this, 'addAction'])
             ->method('POST|GET')
             ->bind('posts_add');
+
         return $controller;
     }
 
 
     /**
-     * Index action.
+     * Index action
      *
-     * @param \Silex\Application $app Silex application
+     * @param Application $app  Application
+     * @param int         $page Page
      *
-     * @return string Response
+     * @return mixed
      */
     public function indexAction(Application $app, $page = 1)
     {
+        $userId = $app['security.token_storage']->getToken()->getUser()->getID();
+
         $postsRepository = new PostsRepository($app['db']);
+
+        $post = [];
+
+        $form = $app['form.factory']->createBuilder(
+            PostType::class,
+            $post
+        )->getForm();
 
         return $app['twig']->render(
             'posts/index.html.twig',
-            ['paginator' => $postsRepository->findAllPaginated($page)]
+            ['paginator' => $postsRepository->findAllPaginated($userId, $page),
+                'form' => $form->createView(),
+            ]
         );
     }
 
 
     /**
-     * Add action.
+     * Add post action
      *
-     * @param \Silex\Application                        $app     Silex application
-     * @param \Symfony\Component\HttpFoundation\Request $request HTTP Request
+     * @param Application $app     Application
+     * @param Request     $request HttpRequest
      *
-     * @return \Symfony\Component\HttpFoundation\Response HTTP Response
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     *
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function addAction(Application $app, Request $request)
     {
         $post = [];
+        $userId = $app['security.token_storage']->getToken()->getUser()->getID();
 
         $form = $app['form.factory']->createBuilder(
             PostType::class,
@@ -76,7 +114,7 @@ class PostsController implements ControllerProviderInterface
 
         if ($form->isSubmitted() && $form->isValid()) {
             $postsRepository = new PostsRepository($app['db']);
-            $postsRepository->save($form->getData());
+            $postsRepository->save($form->getData(), $userId);
 
             $app['session']->getFlashBag()->add(
                 'messages',
@@ -86,17 +124,7 @@ class PostsController implements ControllerProviderInterface
                 ]
             );
 
-            return $app->redirect($app['url_generator']->generate('posts_index'), 301);
+            return $app->redirect($app['url_generator']->generate('posts_index_paginated'), 301);
         }
-
-
-        return $app['twig']->render(
-            'posts/add.html.twig',
-            [
-                'post' => $post,
-                'form' => $form->createView(),
-            ]
-        );
     }
-
 }

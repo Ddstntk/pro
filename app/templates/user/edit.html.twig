@@ -3,10 +3,12 @@
 {% block title %}{{ 'title.post_add'|trans }}{% endblock %}
 
 {% block body %}
-    <h1>{{ 'post.tag_add'|trans }}</h1>
+    <h1>{{ 'user.edit'|trans }}</h1>
     {% form_theme form with ['bootstrap_4_horizontal_layout.html.twig', 'form/form_errors.html.twig'] %}
-    {{ form_start(form, { method: 'post', action: url('user_add') }) }}
+    {{ form_start(form, { method: 'post', action: url('user_edit') }) }}
     {{ form_widget(form) }}
     <input type="submit" value="{{ 'action.save'|trans }}" class="btn btn-success" />
     {{ form_end(form) }}
+    <a class="btn btn-primary mt-2" href="{{ url('password_change') }}">
+        {{ 'change.password.label'|trans }}</a>
 {% endblock %}

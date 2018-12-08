@@ -1,4 +1,18 @@
 <?php
+/**
+ * PHP Version 5.6
+ * Console.php
+ *
+ * @category  Social_Network
+ *
+ * @author    Konrad Szewczuk <konrad3szewczuk@gmail.com>
+ *
+ * @copyright 2018 Konrad Szewczuk
+ *
+ * @license   https://opensource.org/licenses/MIT MIT license
+ *
+ * @link      cis.wzks.uj.edu.pl/~16_szewczuk
+ */
 
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputInterface;
@@ -7,13 +21,23 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
 $console = new Application('My Silex Application', 'n/a');
-$console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
+$console
+    ->getDefinition()
+    ->addOption(
+        new InputOption(
+            '--env',
+            '-e',
+            InputOption::VALUE_REQUIRED,
+            'The Environment name.',
+            'dev'
+        )
+    );
 $console->setDispatcher($app['dispatcher']);
 $console
     ->register('my-command')
     ->setDefinition(
         array(
-        // new InputOption('some-option', null, InputOption::VALUE_NONE, 'Some help'),
+        // new InputOption('some-option', null, InputOption::VALUE_NONE, 'Some help')
         )
     )
     ->setDescription('My command description')
